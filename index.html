@@ -784,7 +784,7 @@ window.storage = {
   },
 
   async set(key, value, persistent = false) {
-    const response = await fetch('/api/storage.js', {
+    const response = await fetch('/api/storage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'set', key, value })
@@ -793,7 +793,7 @@ window.storage = {
   },
 
   async list(prefix, persistent = false) {
-    const response = await fetch('/api/storage.js', {
+    const response = await fetch('/api/storage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'list', key: prefix })
@@ -1500,6 +1500,7 @@ window.storage = {
     </script>
 </body>
 </html>
+
 
 
 
