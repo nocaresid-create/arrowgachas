@@ -750,7 +750,27 @@
 
     <script>
 
-        window.storage = {
+        // Global State
+        let currentRole = 'user';
+        let currentUsername = '';
+        let isAdmin = false;
+        let isSpinning = false;
+        let currentEditItemId = null;
+
+        // Initialize particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+window.storage = {
   async get(key, persistent = false) {
     const response = await fetch('/api/storage', {
       method: 'POST',
@@ -793,26 +813,7 @@
     return response.ok;
   }
 };
-        // Global State
-        let currentRole = 'user';
-        let currentUsername = '';
-        let isAdmin = false;
-        let isSpinning = false;
-        let currentEditItemId = null;
-
-        // Initialize particles
-        function createParticles() {
-            const container = document.getElementById('particles');
-            for (let i = 0; i < 30; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 15 + 's';
-                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
-                container.appendChild(particle);
-            }
-        }
-
+        
         // Show notification
         function showNotification(message, type = 'success') {
             const notif = document.createElement('div');
@@ -1499,3 +1500,4 @@
     </script>
 </body>
 </html>
+
