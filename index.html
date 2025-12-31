@@ -227,6 +227,71 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
+        /* Wheel styles */
+        .wheel-container {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .wheel-canvas {
+            width: 360px;
+            height: 360px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+            overflow: hidden;
+        }
+
+        .wheel-segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            left: 50%;
+            top: 50%;
+            transform-origin: 0% 0%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 12px;
+            color: white;
+            font-weight: 700;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+        }
+
+        .wheel-pointer {
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 14px solid transparent;
+            border-right: 14px solid transparent;
+            border-bottom: 24px solid #ffd700;
+            z-index: 20;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        .wheel-controls {
+            max-width: 360px;
+            width: 100%;
+        }
+
+        .wheel-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(255,255,255,0.95);
+            padding: 12px;
+            border-radius: 10px;
+        }
+
         .tab-content.active {
             display: block;
             animation: fadeIn 0.5s;
@@ -636,6 +701,7 @@
         <div id="userMode">
             <div class="tabs">
                 <button class="tab active" data-tab="gacha">🎰 Gacha</button>
+                <button class="tab" data-tab="wheel">🔁 Spin Wheel</button>
                 <button class="tab" data-tab="payment">💳 Upload Bukti Bayar</button>
                 <button class="tab" data-tab="inventory">📦 Inventory</button>
                 <button class="tab" data-tab="stats">📊 Statistik</button>
@@ -653,12 +719,37 @@
                 </div>
             </div>
 
+            <div id="wheel" class="tab-content">
+                <div style="text-align: center;">
+                    <h2 style="margin-bottom: 20px; color: #667eea;">🔁 Spin Wheel (Names)</h2>
+                    <div class="wheel-container">
+                        <div class="wheel-canvas" id="wheelCanvas">
+                            <div class="wheel-pointer"></div>
+                        </div>
+
+                        <div class="wheel-controls">
+                            <div style="display: flex; gap:8px; margin-bottom:8px;">
+                                <input type="text" id="wheelNameInput" placeholder="Add name to wheel" style="flex:1; padding:10px; border-radius:8px; border:2px solid #e0e0e0;">
+                                <button class="btn btn-primary" id="addWheelNameBtn">Add</button>
+                            </div>
+                            <div style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
+                                <button class="btn" id="clearWheelBtn" style="background:#ef4444; color:white; flex:1;">Clear</button>
+                                <button class="btn btn-primary" id="spinWheelBtn" style="flex:1;">Spin Wheel</button>
+                            </div>
+                            <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><input type="checkbox" id="removeWinnerCheckbox"> Remove winner from wheel</label>
+                            <div class="wheel-list" id="wheelList"></div>
+                            <div id="wheelResult" style="margin-top:12px; display:none; background:white; padding:12px; border-radius:8px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="payment" class="tab-content">
                 <div class="payment-section">
                     <h3>💰 Upload Bukti Pembayaran</h3>
                     <div class="payment-info">
-                        <p><strong>Harga per Spin:</strong> Rp 10.000</p>
-                        <p><strong>Rekening Transfer:</strong></p>
+                        <p><strong>Harga per Spin:</strong> 10 BGL</p>
+                        <p><strong>SEN</strong></p>
                         <p>Bank BCA: 1234567890</p>
                         <p>a/n ARROW GACHA SYSTEM</p>
                     </div>
@@ -1493,6 +1584,117 @@ window.storage = {
         // Initialize
         createParticles();
         createCarousel();
+
+        // --- Spin Wheel functionality ---
+        let wheelNames = [];
+        let wheelAngle = 0;
+
+        function saveWheel() {
+            try { localStorage.setItem('spinWheel:names', JSON.stringify(wheelNames)); } catch(e){}
+        }
+
+        function loadWheel() {
+            try { wheelNames = JSON.parse(localStorage.getItem('spinWheel:names') || '[]'); } catch(e){ wheelNames = []; }
+            renderWheel();
+        }
+
+        function renderWheel() {
+            const canvas = document.getElementById('wheelCanvas');
+            const list = document.getElementById('wheelList');
+            canvas.querySelectorAll('.wheel-segment').forEach(n => n.remove());
+
+            if (wheelNames.length === 0) {
+                list.innerHTML = '<p style="color:#666; text-align:left;">No names added</p>';
+                return;
+            }
+
+            const segAngle = 360 / wheelNames.length;
+            for (let i = 0; i < wheelNames.length; i++) {
+                const seg = document.createElement('div');
+                seg.className = 'wheel-segment';
+                seg.style.transform = `rotate(${i * segAngle}deg) skewY(${90 - segAngle}deg)`;
+                seg.style.width = '50%';
+                seg.style.height = '50%';
+                seg.style.background = i % 2 === 0 ? 'rgba(102,126,234,0.9)' : 'rgba(118,75,162,0.9)';
+                seg.innerHTML = `<div style="transform: skewY(${segAngle-90}deg) rotate(${segAngle/2}deg); width:200%;">${wheelNames[i]}</div>`;
+                canvas.appendChild(seg);
+            }
+
+            list.innerHTML = '';
+            wheelNames.forEach((n, idx) => {
+                const row = document.createElement('div');
+                row.style.display = 'flex';
+                row.style.justifyContent = 'space-between';
+                row.style.alignItems = 'center';
+                row.style.padding = '6px 0';
+                row.style.borderBottom = '1px solid #eee';
+                row.innerHTML = `<span>${n}</span><div style="display:flex; gap:8px;"><button class='btn' data-idx='${idx}' style='padding:6px;'>Remove</button></div>`;
+                list.appendChild(row);
+                row.querySelector('button').addEventListener('click', () => {
+                    wheelNames.splice(idx,1); saveWheel(); renderWheel();
+                });
+            });
+        }
+
+        document.getElementById('addWheelNameBtn').addEventListener('click', function(){
+            const v = document.getElementById('wheelNameInput').value.trim();
+            if (!v) return;
+            wheelNames.push(v);
+            document.getElementById('wheelNameInput').value = '';
+            saveWheel(); renderWheel();
+        });
+
+        document.getElementById('clearWheelBtn').addEventListener('click', function(){
+            if (!confirm('Clear all names from wheel?')) return;
+            wheelNames = []; saveWheel(); renderWheel();
+        });
+
+        document.getElementById('spinWheelBtn').addEventListener('click', async function(){
+            if (wheelNames.length === 0) { showNotification('No names on wheel', 'error'); return; }
+            const spins = 4 + Math.floor(Math.random()*4);
+            const winnerIndex = Math.floor(Math.random()*wheelNames.length);
+            const segAngle = 360 / wheelNames.length;
+            const finalAngle = 360*spins + (360 - (winnerIndex * segAngle) - segAngle/2);
+            const canvas = document.getElementById('wheelCanvas');
+            canvas.style.transition = 'transform 4s cubic-bezier(.12,.7,.18,1)';
+            canvas.style.transform = `rotate(${finalAngle}deg)`;
+
+            document.getElementById('spinWheelBtn').disabled = true;
+            setTimeout(() => {
+                document.getElementById('spinWheelBtn').disabled = false;
+                const winner = wheelNames[winnerIndex];
+                const res = document.getElementById('wheelResult');
+                res.style.display = 'block';
+                res.innerHTML = `<strong>Winner:</strong> ${winner}`;
+
+                // If remove option checked, remove winner
+                const remove = document.getElementById('removeWinnerCheckbox').checked;
+                if (remove) {
+                    wheelNames.splice(winnerIndex,1);
+                    saveWheel();
+                    renderWheel();
+                }
+
+                // reset transform for further spins (keep angle modulo 360)
+                const normalized = finalAngle % 360;
+                canvas.style.transition = 'none';
+                canvas.style.transform = `rotate(${normalized}deg)`;
+            }, 4200);
+        });
+
+        // load wheel on tab show
+        const originalTabHandler = null;
+
+        // ensure tab switch loads wheel
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabName = this.dataset.tab;
+                if (tabName === 'wheel') loadWheel();
+            });
+        });
+
+        // initialize wheel
+        loadWheel();
     </script>
 </body>
 </html>
