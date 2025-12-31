@@ -770,47 +770,43 @@
             }
         }
 
+onst STORAGE_API = '/api/storage';
+
 window.storage = {
-  async get(key, persistent = false) {
-    const response = await fetch('/api/storage', {
+  async get(key) {
+    const res = await fetch(STORAGE_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'get', key })
     });
-    if (response.ok) {
-      return await response.json();
-    }
-    return null;
+    return res.ok ? res.json() : null;
   },
 
-  async set(key, value, persistent = false) {
-    const response = await fetch('/api/storage', {
+  async set(key, value) {
+    const res = await fetch(STORAGE_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'set', key, value })
     });
-    return response.ok;
+    return res.ok;
   },
 
-  async list(prefix, persistent = false) {
-    const response = await fetch('/api/storage', {
+  async list(prefix) {
+    const res = await fetch(STORAGE_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'list', key: prefix })
     });
-    if (response.ok) {
-      return await response.json();
-    }
-    return { keys: [] };
+    return res.ok ? res.json() : { keys: [] };
   },
 
-  async delete(key, persistent = false) {
-    const response = await fetch('/api/storage', {
+  async delete(key) {
+    const res = await fetch(STORAGE_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'delete', key })
     });
-    return response.ok;
+    return res.ok;
   }
 };
         
@@ -1500,6 +1496,7 @@ window.storage = {
     </script>
 </body>
 </html>
+
 
 
 
