@@ -1,11 +1,37 @@
-const { MongoClient } = require('mongodb');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 
 const uri = process.env.MONGODB_URI;
 const DB_NAME = 'arrow_gacha';
 const COLLECTION = 'storage';
 
-let client;
-let collection;
+let cached = global._mongo;
+if (!cached) {
+  cached = global._mongo = { conn: null, promise: null };
+}
+
+async function connect() {
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
+    const client = new MongoClient(uri, {
+      serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+      },
+    });
+
+    cached.promise = client.connect().then(client => {
+      return {
+        client,
+        collection: client.db(DB_NAME).collection(COLLECTION),
+      };
+    });
+  }
+
+  cached.conn = await cached.promise;
+  return cached.conn;
+}
 
 module.exports = async function handler(req, res) {
   try {
@@ -17,13 +43,7 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'MONGODB_URI missing' });
     }
 
-    if (!client) {
-      client = new MongoClient(uri);
-      await client.connect();
-      collection = client.db(DB_NAME).collection(COLLECTION);
-      await collection.createIndex({ key: 1 }, { unique: true });
-    }
-
+    const { collection } = await connect();
     const { action, key, value } = req.body || {};
 
     if (action === 'list') {
@@ -54,7 +74,7 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid action' });
 
   } catch (err) {
-    console.error(err);
+    console.error('API ERROR:', err);
     return res.status(500).json({ error: err.message });
   }
 };
