@@ -1,24 +1,21 @@
+// Clean, single-implementation storage API
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
-const uri = process.env.MONGODB_URI;
+const uri = process.env.MONGODB_URI || '';
 const DB_NAME = process.env.MONGODB_DB || 'arrow_gacha';
 const COLLECTION = process.env.MONGODB_COLLECTION || 'storage';
 
 let cached = global._mongo;
 if (!cached) cached = global._mongo = { conn: null, promise: null };
 
-function escapeRegex(s){ return String(s || '').replace(/[.*+?^${}()|[\\]\\]/g, '\\$&'); }
+function escapeRegex(s) { return String(s || '').replace(/[.*+?^${}()|[\\]\\]/g, '\\$&'); }
 
 async function connect() {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
     const client = new MongoClient(uri, {
-      serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-      },
+      serverApi: { version: ServerApiVersion.v1, strict: true, deprecationErrors: true },
     });
 
     cached.promise = client.connect().then(client => {
@@ -33,7 +30,7 @@ async function connect() {
 }
 
 module.exports = async function handler(req, res) {
-  // Allow simple CORS for browser testing
+  // Minimal CORS for browser testing
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -49,39 +46,40 @@ module.exports = async function handler(req, res) {
 
     let conn;
     try { conn = await connect(); } catch (e) {
-      console.error('Mongo connect error', e && e.message ? e.message : e);
+      console.error('Mongo connect error:', e && e.message ? e.message : e);
       return res.status(500).json({ error: 'Failed to connect to MongoDB: ' + (e && e.message ? e.message : String(e)) });
     }
 
     const { collection } = conn;
-    const { action } = req.body || {};
+    const body = req.body || {};
+    const action = (body.action || '').toString();
 
     if (!action) return res.status(400).json({ error: 'action required' });
 
     if (action === 'list') {
-      const prefix = req.body.key || '';
+      const prefix = body.key || '';
       const regex = new RegExp('^' + escapeRegex(prefix));
       const docs = await collection.find({ key: { $regex: regex } }).toArray();
       return res.status(200).json({ keys: docs.map(d => d.key) });
     }
 
     if (action === 'get') {
-      const key = req.body.key;
+      const key = body.key;
       if (!key) return res.status(400).json({ error: 'key required for get' });
       const doc = await collection.findOne({ key });
       return res.status(200).json({ value: doc?.value ?? null, key: doc?.key });
     }
 
     if (action === 'set') {
-      const key = req.body.key;
-      const value = req.body.value;
+      const key = body.key;
+      const value = body.value;
       if (!key) return res.status(400).json({ error: 'key required for set' });
       await collection.updateOne({ key }, { $set: { key, value, updatedAt: new Date() } }, { upsert: true });
       return res.status(200).json({ success: true });
     }
 
     if (action === 'delete') {
-      const key = req.body.key;
+      const key = body.key;
       if (!key) return res.status(400).json({ error: 'key required for delete' });
       await collection.deleteOne({ key });
       return res.status(200).json({ success: true });
