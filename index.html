@@ -770,11 +770,11 @@
             }
         }
 
-onst storagess_API = '/api/storagess';
+onst storages_API = '/api/storages';
 
-window.storagess = {
+window.storages = {
   async get(key) {
-    const res = await fetch(storagess_API, {
+    const res = await fetch(storage_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'get', key })
@@ -783,7 +783,7 @@ window.storagess = {
   },
 
   async set(key, value) {
-    const res = await fetch(storagess_API, {
+    const res = await fetch(storage_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'set', key, value })
@@ -792,7 +792,7 @@ window.storagess = {
   },
 
   async list(prefix) {
-    const res = await fetch(storagess_API, {
+    const res = await fetch(storage_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'list', key: prefix })
@@ -801,7 +801,7 @@ window.storagess = {
   },
 
   async delete(key) {
-    const res = await fetch(storagess_API, {
+    const res = await fetch(storage_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'delete', key })
@@ -1003,10 +1003,10 @@ window.storagess = {
             document.getElementById('itemModal').classList.remove('show');
         });
 
-        // storagess api Functions
+        // storages api Functions
         async function getUserData(username) {
             try {
-                const result = await window.storagess.get(`user:${username}`);
+                const result = await window.storages.get(`user:${username}`);
                 if (result) {
                     return JSON.parse(result.value);
                 } else {
@@ -1016,7 +1016,7 @@ window.storagess = {
                         inventory: [],
                         stats: { totalSpins: 0, itemsObtained: {}, lastSpinTime: null }
                     };
-                    await window.storagess.set(`user:${username}`, JSON.stringify(newUser));
+                    await window.storages.set(`user:${username}`, JSON.stringify(newUser));
                     return newUser;
                 }
             } catch (error) {
@@ -1026,13 +1026,13 @@ window.storagess = {
                     inventory: [],
                     stats: { totalSpins: 0, itemsObtained: {}, lastSpinTime: null }
                 };
-                await window.storagess.set(`user:${username}`, JSON.stringify(newUser));
+                await window.storages.set(`user:${username}`, JSON.stringify(newUser));
                 return newUser;
             }
         }
 
         async function updateUserData(username, data) {
-            await window.storagess.set(`user:${username}`, JSON.stringify(data));
+            await window.storages.set(`user:${username}`, JSON.stringify(data));
         }
 
         async function submitPayment(username, proofImage) {
@@ -1044,18 +1044,18 @@ window.storagess = {
                 status: 'pending',
                 createdAt: new Date().toISOString()
             };
-            await window.storagess.set(paymentId, JSON.stringify(payment), true);
+            await window.storages.set(paymentId, JSON.stringify(payment), true);
         }
 
         async function loadPaymentHistory() {
             if (!currentUsername) return;
             
             try {
-                const keys = await window.storagess.list(`payment:${currentUsername}:`, true);
+                const keys = await window.storages.list(`payment:${currentUsername}:`, true);
                 const payments = [];
                 
                 for (const key of keys.keys) {
-                    const result = await window.storagess.get(key, true);
+                    const result = await window.storages.get(key, true);
                     if (result) {
                         payments.push(JSON.parse(result.value));
                     }
@@ -1092,11 +1092,11 @@ window.storagess = {
 
         async function loadPendingPayments() {
             try {
-                const keys = await window.storagess.list('payment:', true);
+                const keys = await window.storages.list('payment:', true);
                 const payments = [];
                 
                 for (const key of keys.keys) {
-                    const result = await window.storagess.get(key, true);
+                    const result = await window.storages.get(key, true);
                     if (result) {
                         const payment = JSON.parse(result.value);
                         if (payment.status === 'pending') {
@@ -1133,11 +1133,11 @@ window.storagess = {
 
         window.approvePayment = async function(paymentKey, username) {
             try {
-                const result = await window.storagess.get(paymentKey, true);
+                const result = await window.storages.get(paymentKey, true);
                 const payment = JSON.parse(result.value);
                 payment.status = 'approved';
                 payment.adminNote = 'Pembayaran disetujui';
-                await window.storagess.set(paymentKey, JSON.stringify(payment), true);
+                await window.storages.set(paymentKey, JSON.stringify(payment), true);
                 
                 const userData = await getUserData(username);
                 userData.spinCredits += 1;
@@ -1152,11 +1152,11 @@ window.storagess = {
 
         window.rejectPayment = async function(paymentKey) {
             try {
-                const result = await window.storagess.get(paymentKey, true);
+                const result = await window.storages.get(paymentKey, true);
                 const payment = JSON.parse(result.value);
                 payment.status = 'rejected';
                 payment.adminNote = 'Pembayaran ditolak';
-                await window.storagess.set(paymentKey, JSON.stringify(payment), true);
+                await window.storages.set(paymentKey, JSON.stringify(payment), true);
                 
                 showNotification('Pembayaran ditolak', 'success');
                 await loadPendingPayments();
@@ -1173,23 +1173,23 @@ window.storagess = {
                 enabled: true,
                 createdAt: new Date().toISOString()
             };
-            await window.storagess.set(itemId, JSON.stringify(item), true);
+            await window.storages.set(itemId, JSON.stringify(item), true);
         }
 
         async function updateItem(itemId, itemData) {
-            const result = await window.storagess.get(itemId, true);
+            const result = await window.storages.get(itemId, true);
             const item = JSON.parse(result.value);
             Object.assign(item, itemData);
-            await window.storagess.set(itemId, JSON.stringify(item), true);
+            await window.storages.set(itemId, JSON.stringify(item), true);
         }
 
         async function loadAllItems() {
             try {
-                const keys = await window.storagess.list('item:', true);
+                const keys = await window.storages.list('item:', true);
                 const items = [];
                 
                 for (const key of keys.keys) {
-                    const result = await window.storagess.get(key, true);
+                    const result = await window.storages.get(key, true);
                     if (result) {
                         items.push({ key, ...JSON.parse(result.value) });
                     }
@@ -1224,7 +1224,7 @@ window.storagess = {
 
         window.editItem = async function(itemKey) {
             try {
-                const result = await window.storagess.get(itemKey, true);
+                const result = await window.storages.get(itemKey, true);
                 const item = JSON.parse(result.value);
                 
                 currentEditItemId = itemKey;
@@ -1241,7 +1241,7 @@ window.storagess = {
         window.deleteItem = async function(itemKey) {
             if (confirm('Yakin ingin menghapus item ini?')) {
                 try {
-                    await window.storagess.delete(itemKey, true);
+                    await window.storages.delete(itemKey, true);
                     showNotification('Item berhasil dihapus!', 'success');
                     await loadAllItems();
                 } catch (error) {
@@ -1252,12 +1252,12 @@ window.storagess = {
 
         async function loadAllUsers() {
             try {
-                const keys = await window.storagess.list('user:');
+                const keys = await window.storages.list('user:');
                 const users = [];
                 
                 for (const key of keys.keys) {
                     try {
-                        const result = await window.storagess.get(key);
+                        const result = await window.storages.get(key);
                         if (result) {
                             users.push(JSON.parse(result.value));
                         }
@@ -1305,11 +1305,11 @@ window.storagess = {
 
         async function createCarousel() {
             try {
-                const keys = await window.storagess.list('item:', true);
+                const keys = await window.storages.list('item:', true);
                 const items = [];
                 
                 for (const key of keys.keys) {
-                    const result = await window.storagess.get(key, true);
+                    const result = await window.storages.get(key, true);
                     if (result) {
                         const item = JSON.parse(result.value);
                         if (item.enabled !== false) {
@@ -1355,11 +1355,11 @@ window.storagess = {
             track.classList.add('spinning');
 
             try {
-                const keys = await window.storagess.list('item:', true);
+                const keys = await window.storages.list('item:', true);
                 const items = [];
                 
                 for (const key of keys.keys) {
-                    const result = await window.storagess.get(key, true);
+                    const result = await window.storages.get(key, true);
                     if (result) {
                         const item = JSON.parse(result.value);
                         if (item.enabled !== false) {
@@ -1496,6 +1496,7 @@ window.storagess = {
     </script>
 </body>
 </html>
+
 
 
 
