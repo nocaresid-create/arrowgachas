@@ -772,7 +772,7 @@
 
 window.storage = {
   async get(key, persistent = false) {
-    const response = await fetch('/api/storage', {
+    const response = await fetch('/lib/storage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'get', key })
@@ -784,7 +784,7 @@ window.storage = {
   },
 
   async set(key, value, persistent = false) {
-    const response = await fetch('/api/storage', {
+    const response = await fetch('/lib/storage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'set', key, value })
@@ -793,7 +793,7 @@ window.storage = {
   },
 
   async list(prefix, persistent = false) {
-    const response = await fetch('/api/storage', {
+    const response = await fetch('/lib/storage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'list', key: prefix })
@@ -805,7 +805,7 @@ window.storage = {
   },
 
   async delete(key, persistent = false) {
-    const response = await fetch('/api/storage', {
+    const response = await fetch('/lib/storage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'delete', key })
@@ -1007,7 +1007,7 @@ window.storage = {
             document.getElementById('itemModal').classList.remove('show');
         });
 
-        // Storage API Functions
+        // Storage lib Functions
         async function getUserData(username) {
             try {
                 const result = await window.storage.get(`user:${username}`);
@@ -1500,4 +1500,5 @@ window.storage = {
     </script>
 </body>
 </html>
+
 
