@@ -7,7 +7,7 @@ abstract class TestCase extends Illuminate\Foundation\Testing\TestCase
      *
      * @var string
      */
-    protected $baseUrl = 'http://';
+    protected $baseUrl = 'https://arrowgachas.vercel.app/';
 
     /**
      * Creates the application.
