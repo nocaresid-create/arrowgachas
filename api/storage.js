@@ -1,41 +1,60 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient } = require('mongodb');
 
-module.exports = async (req, res) => {
+const uri = process.env.MONGODB_URI;
+const DB_NAME = 'arrow_gacha';
+const COLLECTION = 'storage';
+
+let client;
+let collection;
+
+module.exports = async function handler(req, res) {
   try {
-    res.setHeader('Content-Type', 'application/json');
-
-    // TEST 1: ENV
-    if (!process.env.MONGODB_URI) {
-      return res.status(500).json({
-        step: 'env',
-        error: 'MONGODB_URI is undefined'
-      });
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    // TEST 2: MongoClient init
-    const client = new MongoClient(process.env.MONGODB_URI, {
-      serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-      },
-    });
+    if (!uri) {
+      return res.status(500).json({ error: 'MONGODB_URI missing' });
+    }
 
-    // TEST 3: Connect
-    await client.connect();
+    if (!client) {
+      client = new MongoClient(uri);
+      await client.connect();
+      collection = client.db(DB_NAME).collection(COLLECTION);
+      await collection.createIndex({ key: 1 }, { unique: true });
+    }
 
-    // TEST 4: Ping
-    await client.db('admin').command({ ping: 1 });
+    const { action, key, value } = req.body || {};
 
-    return res.status(200).json({
-      step: 'ok',
-      message: 'MongoDB connected'
-    });
+    if (action === 'list') {
+      const regex = new RegExp(`^${key || ''}`);
+      const docs = await collection.find({ key: { $regex: regex } }).toArray();
+      return res.status(200).json({ keys: docs.map(d => d.key) });
+    }
+
+    if (action === 'get') {
+      const doc = await collection.findOne({ key });
+      return res.status(200).json({ value: doc?.value ?? null });
+    }
+
+    if (action === 'set') {
+      await collection.updateOne(
+        { key },
+        { $set: { key, value, updatedAt: new Date() } },
+        { upsert: true }
+      );
+      return res.status(200).json({ success: true });
+    }
+
+    if (action === 'delete') {
+      await collection.deleteOne({ key });
+      return res.status(200).json({ success: true });
+    }
+
+    return res.status(400).json({ error: 'Invalid action' });
+
   } catch (err) {
-    return res.status(500).json({
-      step: 'catch',
-      error: err.message,
-      stack: err.stack
-    });
+    console.error(err);
+    return res.status(500).json({ error: err.message });
   }
 };
