@@ -1,9 +1,9 @@
 // app/layout.tsx
-import './globals.css'
+import './global.css'
 
 export const metadata = {
-  title: 'SpinWheel App',
-  description: 'Dashboard Gacha & Spin',
+  title: 'ArrowGachas',
+  description: 'Spin Wheel & Gacha System',
 }
 
 export default function RootLayout({
