@@ -13,6 +13,6 @@ export const registerSchema = z.object({
 
 export const itemSchema = z.object({
   name: z.string().min(1),
-  rarityId: z.number().int().positive(),
+  rarityId: z.string(),
   image: z.string(),
 })

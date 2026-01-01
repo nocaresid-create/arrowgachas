@@ -15,13 +15,13 @@ export async function comparePassword(
   return bcrypt.compare(password, hash)
 }
 
-export function generateToken(userId: number, role: string): string {
+export function generateToken(userId: string, role: string): string {
   return jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '7d' })
 }
 
 export function verifyToken(token: string) {
   try {
-    return jwt.verify(token, JWT_SECRET) as { userId: number; role: string }
+    return jwt.verify(token, JWT_SECRET) as { userId: string; role: string }
   } catch {
     return null
   }
