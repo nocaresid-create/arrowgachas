@@ -16,7 +16,7 @@ model User {
   balance       Int           @default(0)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
-
+  
   payments      Payment[]
   inventory     Inventory[]
   spinHistory   SpinHistory[]
@@ -27,10 +27,10 @@ model Item {
   id            String        @id @default(auto()) @map("_id") @db.ObjectId
   name          String
   rarityId      String        @db.ObjectId
+  rarity        Rarity        @relation(fields: [rarityId], references: [id])
   image         String
   createdAt     DateTime      @default(now())
-
-  rarity        Rarity        @relation(fields: [rarityId], references: [id])
+  
   inventory     Inventory[]
   spinHistory   SpinHistory[]
   gachaHistory  GachaHistory[]
@@ -42,7 +42,7 @@ model Rarity {
   color     String
   dropRate  Float
   order     Int
-
+  
   items     Item[]
 }
 
@@ -54,46 +54,42 @@ model Config {
 }
 
 model Payment {
-  id          String         @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String         @db.ObjectId
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String        @db.ObjectId
+  user        User          @relation(fields: [userId], references: [id])
   amount      Int
   type        PaymentType
-  status      PaymentStatus  @default(PENDING)
+  status      PaymentStatus @default(PENDING)
   proofImage  String?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-
-  user        User           @relation(fields: [userId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 model Inventory {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   userId      String   @db.ObjectId
-  itemId      String   @db.ObjectId
-  obtainedAt  DateTime @default(now())
-
   user        User     @relation(fields: [userId], references: [id])
+  itemId      String   @db.ObjectId
   item        Item     @relation(fields: [itemId], references: [id])
+  obtainedAt  DateTime @default(now())
 }
 
 model SpinHistory {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   userId      String   @db.ObjectId
-  itemId      String   @db.ObjectId
-  createdAt   DateTime @default(now())
-
   user        User     @relation(fields: [userId], references: [id])
+  itemId      String   @db.ObjectId
   item        Item     @relation(fields: [itemId], references: [id])
+  createdAt   DateTime @default(now())
 }
 
 model GachaHistory {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   userId      String   @db.ObjectId
-  itemId      String   @db.ObjectId
-  createdAt   DateTime @default(now())
-
   user        User     @relation(fields: [userId], references: [id])
+  itemId      String   @db.ObjectId
   item        Item     @relation(fields: [itemId], references: [id])
+  createdAt   DateTime @default(now())
 }
 
 enum Role {
